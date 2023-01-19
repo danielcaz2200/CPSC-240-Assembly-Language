@@ -1,0 +1,293 @@
+     1                                  ; Copyright 2021 Daniel Cazarez
+     2                                  ; This program is free software, you can redistribute it and or modify it
+     3                                  ; under the terms of the GNU General Public License version 3
+     4                                  ; A copy of the GNU General Public License version 3 is available here: https://www.gnu.org/licenses/
+     5                                  
+     6                                  ; Author Name: Daniel Cazarez
+     7                                  ; Author Email: danielcaz2200@csu.fullerton.edu
+     8                                  
+     9                                  ; Program name: Assembly Welcome Program, v2.0
+    10                                  ; Files in program: welcome.cpp, hello.asm, r.sh
+    11                                  ; System requirements: Linux on an x86 machine
+    12                                  ; Programming languages: x86 Assembly, C++ and BASH
+    13                                  ; Date program development began: Aug 20, 2021
+    14                                  ; Date finished: Sept 1, 2021
+    15                                  ; Status: No known errors
+    16                                  
+    17                                  ; Purpose: This program prompts the user for input and then repeats the input back to the user
+    18                                  ; This program will return the user's name back to the C++ driver program. String I/O testing.
+    19                                  
+    20                                  ; File name: hello.asm
+    21                                  ; Language: x86 Assembly
+    22                                  ; No data passed to this module. Module passes string back to C++.
+    23                                  
+    24                                  ; Translation information
+    25                                  ; Compile this file: nasm -f elf64 -l hello.lis -o hello.o hello.asm
+    26                                  ; Link the two files: g++ -m64 -fno-pie -no-pie -std=c++17 -o good.out good_morning.o hello.o
+    27                                  ; ./good.out is the executable
+    28                                  
+    29                                  
+    30                                  ; Declare external C++ functions & make funct 'hello' visible to other languages & create constant
+    31                                  extern printf
+    32                                  
+    33                                  extern scanf
+    34                                  
+    35                                  extern fgets
+    36                                  
+    37                                  extern stdin
+    38                                  
+    39                                  extern strlen
+    40                                  
+    41                                  INPUT_LEN equ 256 ; Max bytes of name, title, response
+    42                                  LARGE_BOUNDARY equ 64
+    43                                  SMALL_BOUNDARY equ 16
+    44                                  
+    45                                  global hello
+    46                                  
+    47                                  segment .data
+    48                                  
+    49                                  ; Align next data items on 16-byte boundary, every data item will be separated by 16 bytes
+    50                                  align SMALL_BOUNDARY
+    51                                  
+    52 00000000 257300                    format: db "%s", 0 ; Format indicating a null-terminated string, c-string
+    53                                  
+    54                                    ; === Messages to be printed to user ===
+    55 00000003 506C6561736520656E-       message1:  db        "Please enter your first and last name: ", 0   ; newline would be 10 normally
+    55 0000000C 74657220796F757220-
+    55 00000015 666972737420616E64-
+    55 0000001E 206C617374206E616D-
+    55 00000027 653A2000           
+    56 0000002B 506C6561736520656E-       message2:  db        "Please enter your title (Ms, Mr, Engineer, Programmer, Mathematician, Genius, etc): ", 0
+    56 00000034 74657220796F757220-
+    56 0000003D 7469746C6520284D73-
+    56 00000046 2C204D722C20456E67-
+    56 0000004F 696E6565722C205072-
+    56 00000058 6F6772616D6D65722C-
+    56 00000061 204D617468656D6174-
+    56 0000006A 696369616E2C204765-
+    56 00000073 6E6975732C20657463-
+    56 0000007C 293A2000           
+    57 00000080 48656C6C6F2000            message3:  db        "Hello ", 0
+    58 00000087 2000                      spc: db " ", 0 ; space character
+    59 00000089 2E20486F7720697320-       message4: db ". How is your day so far? ", 0
+    59 00000092 796F75722064617920-
+    59 0000009B 736F206661723F2000 
+    60 000000A4 206973206772656174-       message5: db " is great.", 10, 0
+    60 000000AD 2E0A00             
+    61 000000B0 5468697320636F6E63-       exit: db "This concludes the demonstration of the Hello program written in x86 assembly.", 10, 0
+    61 000000B9 6C7564657320746865-
+    61 000000C2 2064656D6F6E737472-
+    61 000000CB 6174696F6E206F6620-
+    61 000000D4 7468652048656C6C6F-
+    61 000000DD 2070726F6772616D20-
+    61 000000E6 7772697474656E2069-
+    61 000000EF 6E2078383620617373-
+    61 000000F8 656D626C792E0A00   
+    62                                  
+    63                                  ; Align next data items on 64-byte boundary, every data item will be separated by 64 bytes
+    64                                  align LARGE_BOUNDARY
+    65                                  
+    66                                  segment .bss
+    67                                    ; === Reserve bytes for the title, name, and response given by user ===
+    68                                    ; Reserve 256 bytes for each
+    69 00000000 <res 00000100>            title: resb INPUT_LEN
+    70 00000100 <res 00000100>            name: resb INPUT_LEN
+    71 00000200 <res 00000100>            response: resb INPUT_LEN
+    72                                  
+    73                                  segment .text
+    74                                  
+    75                                  ; Entry point of program
+    76                                  hello:
+    77 00000000 55                        push rbp ; Push memory address of base of previous stack frame onto stack top
+    78 00000001 4889E5                    mov rbp, rsp ; Copy value of stack pointer into base pointer, rbp = rsp = both point to stack top
+    79                                    ; Rbp now holds the address of the new stack frame, i.e "top" of stack
+    80 00000004 57                        push rdi ; Backup rdi
+    81 00000005 56                        push rsi ; Backup rsi
+    82 00000006 52                        push rdx ; Backup rdx
+    83 00000007 51                        push rcx ; Backup rcx
+    84 00000008 4150                      push r8 ; Backup r8
+    85 0000000A 4151                      push r9 ; Backup r9
+    86 0000000C 4152                      push r10 ; Backup r10
+    87 0000000E 4153                      push r11 ; Backup r11
+    88 00000010 4154                      push r12 ; Backup r12
+    89 00000012 4155                      push r13 ; Backup r13
+    90 00000014 4156                      push r14 ; Backup r14
+    91 00000016 4157                      push r15 ; Backup r15
+    92 00000018 53                        push rbx ; Backup rbx
+    93 00000019 9C                        pushf ; Backup rflags
+    94                                  
+    95                                    ; Mov rax, 0 = move 0 into rax, i.e rax = 0.
+    96                                    ; 0 indicates we will not have any floating pt arguments, so 0 XMM registers used
+    97 0000001A B800000000                mov rax, 0
+    98                                  
+    99                                    ; Move message format (1st parameter) into
+   100                                    ; general purpose register rdi, indicating the correct format
+   101                                    ; Formats output to indicate null-terminated string
+   102                                    ; Passes parameter to printf
+   103 0000001F 48BF-                     mov rdi, format
+   103 00000021 [0000000000000000] 
+   104                                  
+   105                                    ; Move message to print to general purpose register rsi
+   106                                    ; Passes parameter to printf
+   107 00000029 48BE-                     mov rsi, message1
+   107 0000002B [0300000000000000] 
+   108                                  
+   109                                    ; Call external C++ print funct
+   110 00000033 E8(00000000)              call printf
+   111                                  
+   112                                    ; === old style ===
+   113                                    ;mov rax, 0
+   114                                  
+   115                                    ; similar to before, but now we pass parameters to scanf
+   116                                    ;mov rdi, format
+   117                                    ;mov rsi, name
+   118                                  
+   119                                    ; call external C++ input function
+   120                                    ;call scanf
+   121                                    ; === old style ===
+   122                                  
+   123                                    ; Indicate we have no floating point arguments to pass to external function
+   124 00000038 B800000000                mov rax, 0
+   125                                  
+   126                                    ; Move first argument into argument register rdi
+   127 0000003D 48BF-                     mov rdi, name
+   127 0000003F [0001000000000000] 
+   128                                  
+   129                                    ; Provide fgets with the second argument, the size of the bytes reserved
+   130                                    ; Move into second argument register rsi
+   131 00000047 BE00010000                mov rsi, INPUT_LEN ; read 256 bytes
+   132                                  
+   133                                    ; Move the contents at address of stdin, i.e. dereference, into 3rd argument
+   134                                    ; register
+   135 0000004C 488B1425[00000000]        mov rdx, [stdin]
+   136                                  
+   137                                    ; Call the external function fgets
+   138 00000054 E8(00000000)              call fgets
+   139                                  
+   140                                    ; Remove newline char from fgets input
+   141 00000059 B800000000                mov rax, 0 ; Indicate 0 floating point arguments
+   142 0000005E 48BF-                     mov rdi, name ; Move name into the first argument register
+   142 00000060 [0001000000000000] 
+   143 00000068 E8(00000000)              call strlen ; Call external function strlen, which returns the length of the string leading up to '\0'
+   144                                    
+   145 0000006D 4883E801                  sub rax, 1 ; The length is stored in rax. Here we subtract 1 from rax to obtain the location of '\n'
+   146 00000071 C680[00010000]00          mov byte [name + rax], 0 ; Replace the byte where '\n' exits with '\0'
+   147                                  
+   148 00000078 B800000000                mov rax, 0 ; Indicate 0 floating point arguments
+   149 0000007D 48BF-                     mov rdi, format ; Move string format argument into register rdi
+   149 0000007F [0000000000000000] 
+   150 00000087 48BE-                     mov rsi, message2 ; Move message2 into second argument register rsi
+   150 00000089 [2B00000000000000] 
+   151 00000091 E8(00000000)              call printf ; Call external function printf
+   152                                  
+   153 00000096 B800000000                mov rax, 0 ; Indicate we have no floating point arguments to pass to external function
+   154 0000009B 48BF-                     mov rdi, title ; Move first argument into argument register rdi
+   154 0000009D [0000000000000000] 
+   155 000000A5 BE00010000                mov rsi, INPUT_LEN ; Provide fgets with the second argument, the size of the bytes reserved, then move it into second argument register rsi
+   156 000000AA 488B1425[00000000]        mov rdx, [stdin] ; Move the contents at address of stdin, i.e. dereference, into 3rd argument register
+   157 000000B2 E8(00000000)              call fgets ; Call the external function fgets
+   158                                  
+   159 000000B7 B800000000                mov rax, 0 ; Indicate 0 floating point arguments
+   160 000000BC 48BF-                     mov rdi, title ; Move title into the first argument register
+   160 000000BE [0000000000000000] 
+   161 000000C6 E8(00000000)              call strlen ; Call external function strlen, which returns the length of the string leading up to '\0'
+   162 000000CB 4883E801                  sub rax, 1 ; The length is stored in rax. Here we subtract 1 from rax to obtain the location of '\n'
+   163 000000CF C680[00000000]00          mov byte [title + rax], 0 ; Replace the byte where '\n' exits with '\0'
+   164                                  
+   165                                  
+   166 000000D6 B800000000                mov rax, 0 ; Indicate 0 floating point arguments
+   167 000000DB 48BF-                     mov rdi, format ; Move string format argument into register rdi
+   167 000000DD [0000000000000000] 
+   168 000000E5 48BE-                     mov rsi, message3 ; Move message3 into second argument register rsi
+   168 000000E7 [8000000000000000] 
+   169 000000EF E8(00000000)              call printf ; Call external function printf
+   170                                  
+   171 000000F4 B800000000                mov rax, 0 ; Indicate 0 floating point arguments
+   172 000000F9 48BF-                     mov rdi, format ; Move string format argument into register rdi
+   172 000000FB [0000000000000000] 
+   173 00000103 48BE-                     mov rsi, title ; Move title into second argument register rsi
+   173 00000105 [0000000000000000] 
+   174 0000010D E8(00000000)              call printf ; Call external function printf
+   175                                  
+   176 00000112 B800000000                mov rax, 0 ; Indicate 0 floating point arguments
+   177 00000117 48BF-                     mov rdi, format ; Move string format argument into register rdi
+   177 00000119 [0000000000000000] 
+   178 00000121 48BE-                     mov rsi, spc ; Move space character to format output into second argument register rsi
+   178 00000123 [8700000000000000] 
+   179 0000012B E8(00000000)              call printf ; Call external function printf
+   180                                  
+   181 00000130 B800000000                mov rax, 0 ; Indicate 0 floating point arguments
+   182 00000135 48BF-                     mov rdi, format ; Move string format argument into register rdi
+   182 00000137 [0000000000000000] 
+   183 0000013F 48BE-                     mov rsi, name ; Move name into second argument register rsi
+   183 00000141 [0001000000000000] 
+   184 00000149 E8(00000000)              call printf ; Call external function printf
+   185                                  
+   186 0000014E B800000000                mov rax, 0 ; Indicate 0 floating point arguments
+   187 00000153 48BF-                     mov rdi, format ; Move string format argument into register rdi
+   187 00000155 [0000000000000000] 
+   188 0000015D 48BE-                     mov rsi, message4 ; Move message4 into second argument register rsi
+   188 0000015F [8900000000000000] 
+   189 00000167 E8(00000000)              call printf ; Call external function printf
+   190                                  
+   191 0000016C B800000000                mov rax, 0 ; Indicate we have no floating point arguments to pass to external function
+   192 00000171 48BF-                     mov rdi, response ; Move first argument into argument register rdi
+   192 00000173 [0002000000000000] 
+   193 0000017B BE00010000                mov rsi, INPUT_LEN ; Provide fgets with the second argument, the size of the bytes reserved, move into second argument register rsi
+   194 00000180 488B1425[00000000]        mov rdx, [stdin] ; Move the contents at address of stdin, i.e. dereference, into 3rd argument register
+   195 00000188 E8(00000000)              call fgets ; Call the external function fgets
+   196                                  
+   197 0000018D B800000000                mov rax, 0 ; Indicate 0 floating point arguments
+   198 00000192 48BF-                     mov rdi, response ; Move response into the first argument register
+   198 00000194 [0002000000000000] 
+   199 0000019C E8(00000000)              call strlen ; Call external function strlen, which returns the length of the string leading up to '\0'
+   200 000001A1 4883E801                  sub rax, 1 ; The length is stored in rax. Here we subtract 1 from rax to obtain the location of '\n'
+   201 000001A5 C680[00020000]00          mov byte [response + rax], 0 ; Replace the byte where '\n' exits with '\0'
+   202                                  
+   203 000001AC B800000000                mov rax, 0 ; Indicate 0 floating point arguments
+   204 000001B1 48BF-                     mov rdi, format ; Move string format argument into register rdi
+   204 000001B3 [0000000000000000] 
+   205 000001BB 48BE-                     mov rsi, response ; Move the user's response (with actual response) into second argument register rsi
+   205 000001BD [0002000000000000] 
+   206 000001C5 E8(00000000)              call printf ; Call external function printf
+   207                                  
+   208 000001CA B800000000                mov rax, 0 ; Indicate 0 floating point arguments
+   209 000001CF 48BF-                     mov rdi, format ; Move string format argument into register rdi
+   209 000001D1 [0000000000000000] 
+   210 000001D9 48BE-                     mov rsi, message5 ; Move message5 into second argument register rsi
+   210 000001DB [A400000000000000] 
+   211 000001E3 E8(00000000)              call printf ; Call external function printf
+   212                                  
+   213 000001E8 B800000000                mov rax, 0 ; Indicate 0 floating point arguments
+   214 000001ED 48BF-                     mov rdi, format ; Move string format argument into register rdi
+   214 000001EF [0000000000000000] 
+   215 000001F7 48BE-                     mov rsi, exit ; Move the final message, which declares the end of the Hello module, into rsi
+   215 000001F9 [B000000000000000] 
+   216 00000201 E8(00000000)              call printf ; Call external function printf
+   217                                  
+   218                                    ; Move name into rax general purpose register
+   219                                    ; which is used to return values to the calling function
+   220                                    ; Here a copy of the starting address of the char array
+   221                                    ; will be returned
+   222 00000206 48B8-                     mov rax, name
+   222 00000208 [0001000000000000] 
+   223                                  
+   224 00000210 9D                        popf ; Restore rflags
+   225 00000211 5B                        pop rbx ; Restore rbx
+   226 00000212 415F                      pop r15 ; Restore r15
+   227 00000214 415E                      pop r14 ; Restore r14
+   228 00000216 415D                      pop r13 ; Restore r13
+   229 00000218 415C                      pop r12 ; Restore r12
+   230 0000021A 415B                      pop r11 ; Restore r11
+   231 0000021C 415A                      pop r10 ; Restore r10
+   232 0000021E 4159                      pop r9 ; Restore r9
+   233 00000220 4158                      pop r8 ; Restore r8
+   234 00000222 59                        pop rcx ; Restore rcx
+   235 00000223 5A                        pop rdx ; Restore rdx
+   236 00000224 5E                        pop rsi ; Restore rsi
+   237 00000225 5F                        pop rdi ; Restore rdi
+   238                                  
+   239                                  
+   240 00000226 5D                        pop rbp ; Restore rbp
+   241                                  
+   242 00000227 C3                        ret
