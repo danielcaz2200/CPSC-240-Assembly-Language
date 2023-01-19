@@ -1,0 +1,204 @@
+     1                                  ; Student Name: Daniel Cazarez
+     2                                  ; CPSC 240-05
+     3                                  ; Email: danielcaz2200@csu.fullerton.edu
+     4                                  ; Program Name: Computations
+     5                                  
+     6                                  ; Declare external functions & make 'computations' visible to C & declare constants
+     7                                  STRING_LEN equ 256 ; Max string length
+     8                                  extern printf
+     9                                  extern scanf
+    10                                  extern fgets
+    11                                  extern stdin
+    12                                  extern strlen
+    13                                  
+    14                                  global computations
+    15                                  
+    16                                  segment .data
+    17                                  ; Strings and formats
+    18                                  
+    19                                  ; Format for single float
+    20 00000000 256C6600                float_format: db "%lf", 0
+    21                                  
+    22                                  ; String format for scanf, printf
+    23 00000004 257300                  format: db "%s", 0
+    24                                  
+    25                                  ; IO char arrays
+    26 00000007 546869732070726F67-     welcome_msg: db "This program will help you compute power in watts, given resistance and voltage.", 10, 0
+    26 00000010 72616D2077696C6C20-
+    26 00000019 68656C7020796F7520-
+    26 00000022 636F6D707574652070-
+    26 0000002B 6F77657220696E2077-
+    26 00000034 617474732C20676976-
+    26 0000003D 656E20726573697374-
+    26 00000046 616E636520616E6420-
+    26 0000004F 766F6C746167652E0A-
+    26 00000058 00                 
+    27 00000059 506C6561736520656E-     prompt_name: db "Please enter your name then press enter: ", 0
+    27 00000062 74657220796F757220-
+    27 0000006B 6E616D65207468656E-
+    27 00000074 20707265737320656E-
+    27 0000007D 7465723A2000       
+    28 00000083 506C6561736520656E-     prompt_resistance: db "Please enter your resistance in ohms: ", 0
+    28 0000008C 74657220796F757220-
+    28 00000095 726573697374616E63-
+    28 0000009E 6520696E206F686D73-
+    28 000000A7 3A2000             
+    29 000000AA 506C6561736520656E-     prompt_voltage: db "Please enter your voltage in volts: ", 0
+    29 000000B3 74657220796F757220-
+    29 000000BC 766F6C746167652069-
+    29 000000C5 6E20766F6C74733A20-
+    29 000000CE 00                 
+    30                                  
+    31                                  ; 8 digits of precision
+    32 000000CF 5468616E6B20796F75-     print_power: db "Thank you, your power is %0.8lf watts.", 10, 0
+    32 000000D8 2C20796F757220706F-
+    32 000000E1 776572206973202530-
+    32 000000EA 2E386C662077617474-
+    32 000000F3 732E0A00           
+    33                                  
+    34                                  segment .bss
+    35                                  ; Reserve 256 bytes for name and title each
+    36 00000000 <res 00000100>          name: resb STRING_LEN
+    37                                  
+    38                                  segment .text
+    39                                  ; Entrance point of program
+    40                                  computations:
+    41                                      ; 15 PUSHES
+    42 00000000 55                          push rbp ; Save base pointer to stack
+    43 00000001 4889E5                      mov rbp, rsp ; Move rsp into rbp
+    44 00000004 57                          push rdi ; Backup rdi
+    45 00000005 56                          push rsi ; Backup rsi
+    46 00000006 52                          push rdx ; Backup rdx
+    47 00000007 51                          push rcx ; Backup rcx
+    48 00000008 4150                        push r8  ; Backup r8
+    49 0000000A 4151                        push r9 ; Backup r9
+    50 0000000C 4152                        push r10 ; Backup r10
+    51 0000000E 4153                        push r11 ; Backup r11
+    52 00000010 4154                        push r12 ; Backup r12
+    53 00000012 4155                        push r13 ; Backup r13
+    54 00000014 4156                        push r14 ; Backup r14
+    55 00000016 4157                        push r15 ; Backup r15
+    56 00000018 53                          push rbx ; Backup rbx
+    57 00000019 9C                          pushf ; Backup rflags
+    58                                  
+    59                                      ; print welcome message
+    60 0000001A B800000000                  mov rax, 0
+    61 0000001F 48BF-                       mov rdi, format
+    61 00000021 [0400000000000000] 
+    62 00000029 48BE-                       mov rsi, welcome_msg
+    62 0000002B [0700000000000000] 
+    63 00000033 E8(00000000)                call printf
+    64                                  
+    65                                      name_section:
+    66                                      ; prompt for name
+    67 00000038 B800000000                  mov rax, 0 ; Tell printf we have 0 floating point args
+    68 0000003D 48BF-                       mov rdi, format ; Load format into rdi
+    68 0000003F [0400000000000000] 
+    69 00000047 48BE-                       mov rsi, prompt_name ; Load message into rdi
+    69 00000049 [5900000000000000] 
+    70 00000051 E8(00000000)                call printf
+    71                                  
+    72                                      ; name input using fgets
+    73 00000056 B800000000                  mov rax, 0 ; Tell fgets we have 0 floating point args
+    74 0000005B 48BF-                       mov rdi, name ; Load format into rdi
+    74 0000005D [0000000000000000] 
+    75 00000065 BE00010000                  mov rsi, STRING_LEN ; String length
+    76 0000006A 488B1425[00000000]          mov rdx, [stdin] ; Pass in value of stdin
+    77 00000072 E8(00000000)                call fgets
+    78                                  
+    79                                      ; remove trailing newline from fgets
+    80 00000077 B800000000                  mov rax, 0
+    81 0000007C 48BF-                       mov rdi, name
+    81 0000007E [0000000000000000] 
+    82 00000086 E8(00000000)                call strlen
+    83 0000008B 4883E801                    sub rax, 1 ; length stored in rax, go back 1 byte
+    84 0000008F C680[00000000]00            mov byte [name + rax], 0
+    85                                  
+    86                                      input_section:
+    87                                      ; prompt for current
+    88 00000096 B800000000                  mov rax, 0 ; Tell printf we have 0 floating point args
+    89 0000009B 48BF-                       mov rdi, format ; Load format into rdi
+    89 0000009D [0400000000000000] 
+    90 000000A5 48BE-                       mov rsi, prompt_resistance ; Load message into rdi
+    90 000000A7 [8300000000000000] 
+    91 000000AF E8(00000000)                call printf
+    92                                  
+    93                                      ; 16 bytes in total made on stack
+    94                                      ; create space for quadword on stack + qword to stay on boundary
+    95 000000B4 6AFF                        push qword -1
+    96 000000B6 6AFE                        push qword -2
+    97                                  
+    98                                      ; Get user input
+    99 000000B8 B800000000                  mov rax, 0 ; Since we created space earlier via pushes, we do not need to specify the amount of float arguments
+   100 000000BD 48BF-                       mov rdi, float_format ; %lf"
+   100 000000BF [0000000000000000] 
+   101 000000C7 4889E6                      mov rsi, rsp ; rsi points to first quadword on the stack
+   102 000000CA E8(00000000)                call scanf
+   103 000000CF F2440F103C24                movsd xmm15, [rsp] ; Move first input into xmm15 (resistance)
+   104 000000D5 58                          pop rax
+   105 000000D6 58                          pop rax
+   106                                  
+   107                                      ; prompt for volts
+   108 000000D7 B800000000                  mov rax, 0 ; Tell printf we have 0 floating point args
+   109 000000DC 48BF-                       mov rdi, format ; Load format into rdi
+   109 000000DE [0400000000000000] 
+   110 000000E6 48BE-                       mov rsi, prompt_voltage ; Load message into rdi
+   110 000000E8 [AA00000000000000] 
+   111 000000F0 E8(00000000)                call printf
+   112                                  
+   113                                      ; 16 bytes in total made on stack
+   114                                      ; create space for quadword on stack + qword to stay on boundary
+   115 000000F5 6AFF                        push qword -1
+   116 000000F7 6AFE                        push qword -2
+   117                                  
+   118                                      ; Get user input
+   119 000000F9 B800000000                  mov rax, 0 ; Since we created space earlier via pushes, we do not need to specify the amount of float arguments
+   120 000000FE 48BF-                       mov rdi, float_format ; %lf"
+   120 00000100 [0000000000000000] 
+   121 00000108 4889E6                      mov rsi, rsp ; rsi points to first quadword on the stack
+   122 0000010B E8(00000000)                call scanf
+   123 00000110 F2440F103424                movsd xmm14, [rsp] ; Move first second input into xmm14 (voltage)
+   124 00000116 58                          pop rax
+   125 00000117 58                          pop rax
+   126                                  
+   127                                      math_section:
+   128                                      ; xmm15 = resistance, xmm14 = volts
+   129                                      ; backup xmm14 (volts) for later
+   130 00000118 F2450F10EE                  movsd xmm13, xmm14
+   131                                  
+   132                                      ; current = (volts / resistance), xmm14 now = current (I)
+   133 0000011D F2450F5EF7                  divsd xmm14, xmm15
+   134                                  
+   135                                      ; xmm13 = P, where P (power) is volts * current, store result in xmm13
+   136 00000122 F2450F59EE                  mulsd xmm13, xmm14
+   137                                  
+   138                                      ; print out the formatted power in xmm13
+   139 00000127 B801000000                  mov rax, 1
+   140 0000012C 48BF-                       mov rdi, print_power
+   140 0000012E [CF00000000000000] 
+   141 00000136 F2410F10C5                  movsd xmm0, xmm13
+   142 0000013B E8(00000000)                call printf
+   143                                  
+   144                                      ; send name to driver
+   145 00000140 48B8-                       mov rax, name
+   145 00000142 [0000000000000000] 
+   146                                  
+   147                                      ; 15 POPS
+   148 0000014A 9D                          popf ; Restore rflags
+   149 0000014B 5B                          pop rbx ; Restore rbx
+   150 0000014C 415F                        pop r15 ; Restore r15
+   151 0000014E 415E                        pop r14 ; Restore r14
+   152 00000150 415D                        pop r13 ; Restore r13
+   153 00000152 415C                        pop r12 ; Restore r12
+   154 00000154 415B                        pop r11 ; Restore r11
+   155 00000156 415A                        pop r10 ; Restore r10
+   156 00000158 4159                        pop r9 ; Restore r9
+   157 0000015A 4158                        pop r8 ; Restore r8
+   158 0000015C 59                          pop rcx ; Restore rcx
+   159 0000015D 5A                          pop rdx ; Restore rdx
+   160 0000015E 5E                          pop rsi ; Restore rsi
+   161 0000015F 5F                          pop rdi ; Restore rdi
+   162 00000160 5D                          pop rbp ; Restore rbp
+   163                                  
+   164                                      ; return
+   165 00000161 C3                          ret
