@@ -1,0 +1,17 @@
+b main 
+b computations
+b output_name
+b power_calculated
+i b
+r
+c
+p/x $rsp
+c
+Programmer Cazarez
+x/s &my_name
+c
+3.0
+2.0
+p/f $xmm15.v2_double[0]
+c
+quit
